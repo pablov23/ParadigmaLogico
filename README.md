@@ -1,4 +1,4 @@
-# ParadigmaLogico
+# ParadigmaLogico (Examen)
 
 
 ## Potencial rebelde
@@ -9,23 +9,21 @@ Es el año 2220 en un lugar muy lejano al planeta Tierra. El líder supremo, de 
 Para poder mantenerse en el poder destina una parte importante de sus recursos a monitorear a sus habitantes y detectar tanto crímenes como posibles focos de disidencia. Para esto cuenta con un programa hecho en Prolog que tiene información sobre todos y cada uno de los habitantes. Si bien parece contener millones y millones de líneas de código, nuestro objetivo va a ser reimplementar ciertas partes centrales del sistema para entender cómo funcionan y, en un futuro, lanzar una ofensiva para rescatar a toda la población.
 
 Para un mayor control de los ciudadanos, los nombres en el planeta fueron reemplazados por un hash md5 de su nombre anterior. Hicimos un ataque de intermediario y logramos conseguir algunas fichas de los ciudadanos, que asumimos se utilizaron para generar la base de conocimientos del sistema:
- 
 
 
-Nombre: 912ec803b2ce49e4a541068d495ab570
+* Nombre: 912ec803b2ce49e4a541068d495ab570
 Trabaja de ingeniera mecánica en la Universidad Tecnológica Intergaláctica. Le gusta el fuego y la destrucción. Es buena armando bombas y vive en la misma casa con 1f5364c58947e14f9afa445bdf1ba4d9 y 2e416649e6ca0a1cbf9a1210cf4ce234. A esa casa le suelen decir “La Severino”. No tiene historial criminal.
 
 
-Nombre: 2e416649e6ca0a1cbf9a1210cf4ce234
+* Nombre: 2e416649e6ca0a1cbf9a1210cf4ce234
 Trabaja en la aviación militar. No parece tener gustos, pero se sabe que es bueno conduciendo autos. Su historial criminal es extenso: robo de aeronaves, fraude, tenencia de cafeína. 
 
-Nombre: f55840c38474c1909ce742172a77a013
+* Nombre: f55840c38474c1909ce742172a77a013
 Trabaja en inteligencia militar. Vive en la Comisaría 48 y es el único que vive allí. Es muy bueno en tiro al blanco; ama los juegos de azar, el ajedrez y tambien el tiro al blanco. En su historial criminal se encuentra la falsificación de vacunas y fraude.
 
-Nombre 42fc1cd45335ad42d603657e5d0f2682
+* Nombre: 42fc1cd45335ad42d603657e5d0f2682
 (inventale su info)
 
-¡Agregate vos!
 
 La actividad política se encuentra fuertemente restringida, con lo que las agrupación que pretenden modificar el orden reinante debieron volverse clandestinas y son buscadas intensamente. Para llevar a cabo sus actividades utilizan pasadizos y túneles ocultos en las viviendas, utilizando nanotecnología para esconderse.
 Por lo que vimos en su base de datos, de cada vivienda se conoce cómo es. A modo de de ejemplo:
