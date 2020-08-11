@@ -1,217 +1,319 @@
-module ParcialFuncional where
+%--Punto 1--Modelar la base de conocimiento para incluir estos datos, agregar alguna persona y vivienda más
 
-import Data.List
-import Text.Show.Functions
+%ciudadano(hash-md5,trabajo,[gustos],[esBueno],[historialCriminal])
+%Se utilizaron los ultimos 5 caracteres del hash para identifica a cada ciudadano
 
-data Persona = UnaPersona{
-nombre :: String,
-tema :: [Gusto],
-miedo :: [CosasMiedo],
-est :: Int
-} deriving Show
+ciudadano(ab570,ingenieraMecanica,[fuego,destruccion],[armadoBombas],[]).
+ciudadano(ce234,aviacionMilitar,[],[conduceAutos],[roboAeronaves,fraude,tenenciaCafeina]).
+ciudadano(f2682,hackerInformatico,[prolog,haskell],[matematica],[hackear]).
+ciudadano(a76cc,estudiante,[dormir,comer,leer,entrenar],[dormir,matematica,tiroAlBlanco],[faltarAClases]).
+ciudadano(7b013,inteligenciaMilitar,[ajedrez,juegosAzar,tiroAlBlanco],[tiroAlBlanco],[falsificacionVacunas,fraude]).
 
-type CosasMiedo = (String,Int)
-type Gusto = String
-type Influencer = Persona->Persona
 
-maria = UnaPersona "maria" ["mecanica"] [("extraterrestres",600),("desempleo",300)] 85
-juanCa = UnaPersona "juanCa" ["maquillaje","trenes"] [("insectos",100),("coronavirus",10),("vacunas",20)] 50
-juanCarlos = UnaPersona "juanCarlos" ["maquillaje","trenes"] [("insectos",100),("coronavirus",10),("vacunas",20)] 45
-juanIgnacio = UnaPersona "Nacho" ["maquillaje","trenes"] [("insectos",100),("coronavirus",10),("vacunas",20)] 45
-mario = UnaPersona "mario" ["mecanica","mecanica","mecanica","mecanica"] [("extraterrestres",900),("desempleo",300)] 85
-mariana = UnaPersona "mariana" ["chocolate"] [("extraterrestres",600),("desempleo",300)] 15
-marisa = UnaPersona "marisa" ["chocolate"] [("extraterrestres",600),("desempleo",300)] 25
+trabajosMilitares([aviacionMilitar,inteligenciaMilitar]).
+habilidadMilitar([armadoBombas,tiroAlBlanco]).
 
---Que una persona se vuelva miedosa a algo en cierta medida, 
---agregándole el nuevo miedo o aumentando su medida, en caso de ya tener ese miedo previamente.
+%viveEn(ciudadano,vivienda)
+viveEn(ab570,laSeverino).
+viveEn(ba4d9,laSeverino).
+viveEn(ce234,laSeverino).
+viveEn(7a013,comisaria48).
+viveEn(a76cc,comisaria48).
 
-miedoso::CosasMiedo->Persona->Persona
-miedoso (nuevoMiedo,medida) persona | (yaTieneMiedo (nuevoMiedo,medida) persona) = persona{miedo=miedo persona ++[(nuevoMiedo,medida)]}
-                               | otherwise = persona{miedo=miedo persona ++[(nuevoMiedo,medida)]}
+esCiudadano(Persona):-
+ciudadano(Persona,_,_,_,_).
 
+%casas(Nombre,cuartoSecreto(Lado),tunel(Cant,Long),pasadizo(Cant),pasadizoSinTerminar(Cant))
+%%%%%%Aclaracion: Si bien este modelado funcionaba con lo que se pedia, se replantea el modelado para los ambientes de una forma 
+%mas apropiada, para que el calculo de los metros cuadrados sea más genérico y para que los ambientes de las casas puedan diferir.
 
-yaTieneMiedo::CosasMiedo->Persona->Bool
-yaTieneMiedo (nuevoMiedo,_) persona = elem nuevoMiedo (miedoPersona persona)
 
-miedoPersona::Persona->[String]
-miedoPersona persona = map fst (miedo persona)
+%%Se comenta lo anterior para aplicar la solucion mas conveniente
+%casa(laSeverino,cuartoSecreto(4,8),tunel([8,5,1]),pasadizo(4),pasadizoSinTerminar(2)).
+%casa(comisaria48,cuartoSecreto(20,20),tunel([10]),pasadizo(1),pasadizoSinTerminar(4)).
+%casa(monsterHouse,cuartoSecreto(10,1),tunel([2,2]),pasadizo(1),pasadizoSinTerminar(4)).
+%casa(casaRosada,cuartoSecreto(3,1),tunel([1,2]),pasadizo(10),pasadizoSinTerminar(5)).
 
---Que una persona pierda pierda el miedo a algo,
---lo que independiente de en qué medida lo tuviera, lo deja de tener. (En caso de no tener ese miedo, no cambia nada)
+%casa(Nombre,[Ambientes]).
 
-pierdeMiedo::CosasMiedo->Persona->Persona
-pierdeMiedo (nuevoMiedo,medida) persona = persona{miedo= filter (\(a,_) -> a /= nuevoMiedo) (miedo persona)}
+casa(laSeverino,[cuartoSecreto(4,8),tunel([8,5,1]),pasadizo(1)]).
+casa(comisaria48,[cuartoSecreto(20,20),tunel([10]),pasadizo(1),pasadizoSinTerminar(4)]).
+casa(monsterHouse,[cuartoSecreto(10,1),tunel([2,2]),pasadizoSinTerminar(4)]).
+casa(casaRosada,[cuartoSecreto(3,1),pasadizo(10),pasadizoSinTerminar(5),bunker(2)]).
 
 
---Que una persona pueda variar su estabilidad en una cierta proporción dada, pero sin salirse de los límites de la escala.
 
-variaEstabilidad::Float->Persona->Persona
-variaEstabilidad prop persona | ((prop*fromIntegral(est persona)<=100) && (prop*fromIntegral(est persona)>=0)) = persona{est = round(prop*fromIntegral(est persona))}
-                              | otherwise = persona
+%No tener gustos registrados en sistema, tener más de 3
+cantGustos(Ciudadano,Cant):-
+ciudadano(Ciudadano,_,ListaGustos,_,_),
+length(ListaGustos,Cant).
 
-sumaEstabilidad::Int->Persona->Persona
-sumaEstabilidad suma persona | (suma+(est persona)<=100) && (suma+(est persona)>=0) = persona{est = suma+(est persona)}
-                              | otherwise = persona
---Que una persona se vuelva fan de otra persona, en ese caso asume como propios
---todos los gustos de la otra persona (si ya tenía previamente alguno de esos gustos, lo va a tener repetido)
+noTieneGustos(Ciudadano):-
+cantGustos(Ciudadano,0).
 
-fanDe::Persona->Persona->Persona
-fanDe persona influencer = persona{tema= tema persona++(tema influencer)}
+masDeTresGustos(Ciudadano):-
+cantGustos(Ciudadano,Cant),
+Cant > 3.
 
---Averiguar si una persona es fanática de un gusto dado, que es cuando tiene más de tres veces dicho gusto.
+gustoRaro(Ciudadano):-noTieneGustos(Ciudadano).
+gustoRaro(Ciudadano):-masDeTresGustos(Ciudadano).
+gustoRaro(Ciudadano):-gusteHabilidad(Ciudadano).
 
-fanaticaDe::Gusto->Persona->Bool
-fanaticaDe gusto persona = (length (filter (==gusto) (tema persona)))>3
+%guste aquello en lo que es bueno.
+gusteHabilidad(Ciudadano):-
+esCiudadano(Ciudadano),
+habilidades(Ciudadano,Sabe),
+gustos(Ciudadano,Sabe).
 
---Averiguar si una persona es miedosa, cuando el total de la medida de todos sus miedos sumados supera 1000.
-esMiedosa::Persona->Bool
-esMiedosa persona = (sum (medidasMiedos persona))>1000
+habilidades(Ciudadano,Habilidad):-
+ciudadano(Ciudadano,_,_,Habilidades,_),
+member(Habilidad,Habilidades).
 
-medidasMiedos::Persona->[Int]
-medidasMiedos persona = map snd (miedo persona)
+gustos(Ciudadano,Gusto):-
+ciudadano(Ciudadano,_,Gustos,_,_),
+member(Gusto,Gustos).
 
---Hay uno, llamado luisitoComunica, que podría intervenirle la televisión a María para hacerle creer
--- que los extraterrestres están instalando una falsa pandemia. El impacto sería que se disminuya su estabilidad en 20 unidades,
--- que tenga miedo a los extraterrestres en 100 y al coronavirus en 50.
+%Tiene más de un registro en su historial criminal o vive junto con alguien que sí lo tiene.
 
+criminal(Persona):-
+ciudadano(Persona,_,_,_,Ilicitos),
+length(Ilicitos,Cant),
+Cant>0.
 
--------Corregido el Issue que se reportó en Git
+viveCon(Persona1,Persona2):-
+viveEn(Persona1,Casa),
+viveEn(Persona2,Casa),
+Persona1\=Persona2.
 
---luisitoComunica::Persona->Persona
---luisitoComunica  persona | (nombre persona == "maria") = afectaAMaria persona
---                         | otherwise = persona
 
---afectaAMaria::Persona->Persona
---afectaAMaria  = miedoso ("extraterrestres",100). miedoso("coronavirus",50).(sumaEstabilidad (-20))
+criCriminal(Persona1):-criminal(Persona1).
+criCriminal(Persona1):-
+viveCon(Persona1,Persona2),
+criminal(Persona2).
 
+%Tener una habilidad en algo considerado terrorista sin tener un trabajo de índole militar.
 
-luisitoComunica::Persona->Persona
-luisitoComunica = miedoso ("extraterrestres",100). miedoso("coronavirus",50).(sumaEstabilidad (-20))
+habilidadTerrorista(Habilidad):-
+habilidadMilitar(Lista),
+member(Habilidad,Lista).
 
+tieneHabilidadTerrorista(Persona):-
+esCiudadano(Persona),
+habilidades(Persona,Habilidad),
+habilidadTerrorista(Habilidad).
+
+tieneTrabajoMilitar(Persona):-
+ciudadano(Persona,Trabajo,_,_,_),
+trabajosMilitares(TrabajosMilitares),
+member(Trabajo,TrabajosMilitares).
+
+%%---Punto 2---Poder saber quiénes son posibles disidentes. 
+%esDisidiente
+esDisidiente(Persona):-
+tieneHabilidadTerrorista(Persona),
+not(tieneTrabajoMilitar(Persona)),
+gustoRaro(Persona),
+criCriminal(Persona).
 
---Hay otro que hace que una persona le de miedo a la corrupción en 10, le pierda el miedo a convertirse en Venezuela
--- y que agrega el gusto por escuchar.
 
-maduro::Persona->Persona
-maduro = miedoso("corrupcion",100).pierdeMiedo("Ser Venezuela",100).agregaGusto "escuchar"
+%---Punto 3 ---Detectar si en una vivienda: 
+%No vive nadie 
+%Todos los que viven tienen al menos un gusto en común.
 
-agregaGusto::String->Persona->Persona
-agregaGusto gusto persona = persona{tema= (tema persona)++[gusto]}
+casaSola(Casa):-
+casa(Casa,_),
+not(viveEn(_,Casa)).
 
---El community manager de un artista es un influencer que hace que la gente se haga fan de dicho artista.
+gustosEnComun(Casa):-
+viveEn(Persona1,Casa),
+forall(viveEn(Persona2,Casa),not(gustosDisgustos(Persona1,Persona2))).
 
-communityManager::Persona->Persona->Persona
-communityManager artista persona = fanDe artista persona
+gustosDisgustos(Persona1,Persona2):-
+gustos(Persona1,Gusto1),
+gustos(Persona2,Gusto2),
+Persona1\=Persona2,
+Gusto1\=Gusto2.
 
---Está el influencer inutil, que no lograr alterar nada.
+%PotencialRebelde si vive en ella algún disidente y su superficie destinada 
+%a actividad clandestinas supera 50 metros cuadrados, lo que se calcula de la siguiente forma:
 
-inutil::Persona->Persona
-inutil persona = persona
+%Para los cuartos secretos, que siempre se consideran rectangulares, la superficie cubierta
+%Para los túneles, el doble de su longitud, excepto cuando están en construcción, que no se consideran.
+%Los pasadizos siempre tienen un metro cuadrado de superficie
 
---Agregá uno a tu elección, pero que tambien realice uno o más cambios en una persona.
---Este influencer hace que sus fans se identifiquen con el apodo "minion" delante de su nombre, le agrega el miedo a pensar en 100
-ejercitoMinion::Persona->Persona
-ejercitoMinion persona = miedoso("pensar",100) persona{nombre = "minion"++nombre persona}
+%Se comenta esta solucion para implementar la mas conveniente:
+%metrosCuadradosCasa(Casa,MetrosCuadrados):-
+%casa(Casa,cuartoSecreto(LargoCuarto,AnchoCuarto),tunel(Tuneles),pasadizo(CantPasadizos),pasadizoSinTerminar(_)),
+%sumlist(Tuneles,MetrosTunel),
+%MetrosCuadrados is (LargoCuarto*AnchoCuarto) + MetrosTunel*2 + CantPasadizos.
 
---Implementar las funciones que permitan:
 
---Hacer una campaña de marketing básica,
---que dado un conjunto de personas hace que todas ellas sean influenciadas por un influencer dado.
+casaGrande(Casa):-
+metrosCuadradosCasa(Casa,MetrosCuadrados),
+MetrosCuadrados>50.
 
---Saber qué influencer es más generador de miedo: dada una lista de personas y dos influencer,
---saber cuál de ellos provoca que más personas se vuelvan miedosas.
+metrosCuadradosCasa(Casa,Metros):-
+findall(Metro,(ambienteCasa(Casa,Ambiente),metrosCuadradosAmbiente(Ambiente,Metro)),MetrosParciales),
+sum_list(MetrosParciales,Metros).
 
+ambienteCasa(Casa,Ambiente):-
+casa(Casa,Ambientes),
+member(Ambiente,Ambientes).
 
-campaniaMarketing::[Persona]->Influencer->[Persona]
-campaniaMarketing listapersonas influencer = map influencer listapersonas
+metrosCuadradosAmbiente(cuartoSecreto(Lado1,Lado2),Metro):-Metro is Lado1 * Lado2.
+metrosCuadradosAmbiente(tunel(Tuneles),Metro):-sumlist(Tuneles,MetrosTunel),Metro is MetrosTunel * 2.
+metrosCuadradosAmbiente(pasadizo(Cant),Metro):-Metro is Cant.
 
-daMasMiedo::[Persona]->Influencer->Influencer->Bool
-daMasMiedo listapersonas influencer1 influencer2 = cantidadMiedosos(campaniaMarketing listapersonas influencer1) > cantidadMiedosos(campaniaMarketing listapersonas influencer2) 
+%Bunker, cantidad de entradas por 8
+metrosCuadradosAmbiente(bunker(Cant),Metro):-Metro is Cant*8.
 
-cantidadMiedosos::[Persona]->Int
-cantidadMiedosos = length.filter(esMiedosa)
+%Si se desea agregar un ambiente adicional solo se deberá definir el predicado en donde se especifique la forma de calcular los metros cuadrados.
 
---producto se saben dos cosas: el gusto que se necesita que tenga la persona para comprarlo y una condición adicional específica de ese producto.
+%---Punto 4 ---Encontrar todas las viviendas que tengan potencial rebelde. 
 
---Por ejemplo:
+potencialRebelde(Casa):-
+casa(Casa,_),
+viveEn(Persona,Casa),
+esDisidiente(Persona),
+casaGrande(Casa).
 
---El desodorante Acks necesita que a la gente le guste el chocolate pero además que la estabilidad de la persona sea menor a 50.
---El llavero de plato volador necesita que a la persona le gusten los extraterrestres pero que no sea miedosa.
---El pollo frito Ca Efe Se necesita que a la persona le guste lo frito y que sea fanática del pollo.
+%--Punto 5 ---Ejemplos de Consultas
+%
+%
+%Se probara el funcionamiento de los siguientes predicados
+%
+%%%%%    gustoRaro(a76cc).     %%%%%%
+%true ;
+%true ;
+% Si evaluamos el nombre del estudiante, vemos que nos devuelve dos veces true, ya que cumple con dos de las condiciones de 
+%gustos raros, tiene mas de tres gustos y le gusta algo en lo que es bueno
 
-data Producto=UnProducto{
+%%%%%%%    criCriminal/1     %%%%%%
+%criCriminal(Quien).
+%Quien = ce234 ;
+%Quien = f2682 ;
+%Quien = a76cc ;
+%Quien = ab570 ;
+%Quien = ba4d9 ;
 
-    gustoProd :: Persona->Bool,
-    necesita :: Persona->Bool
-} deriving Show
+%Si colocamos una variable libre como argumento, el predicado criCriminal/1 nos devolverá a las personas consideradas criminales
+%o las que viven con un criminal
 
-desodoranteAcks = UnProducto (leGusta "chocolate") estabilidadMenor50
-llaveroPlatoVolador = UnProducto (leGusta "extraterrestres") (not.esMiedosa)
-polloKFC = UnProducto (leGusta "frito") (fanaticaDe "pollo")
 
-estabilidadMenor50::Persona->Bool
-estabilidadMenor50 persona = est persona < 50
+%%%%%%   esDisidiente/1     %%%%%%
 
-leGusta::Gusto->Persona->Bool
-leGusta gustoProdu persona = (elem gustoProdu (tema persona))
+%esDisidiente(a76cc).
+%true .
 
---Calcular la eficiencia de un campaña de marketing con un influencer para un producto en particular. Es el porcentaje de variación de la
---cantidad de gente que antes de la campaña no hubiera comprado el producto, pero luego sí.
+%Si evaluamos a a76cc en esDisidiente/1 obtenemos true, ya que cumple con todas las condiciones:
+%Tener una habilidad en algo considerado terrorista sin tener un trabajo de índole militar.
+%No tener gustos registrados en sistema, tener más de 3, o que le guste aquello en lo que es bueno.
+%Tiene más de un registro en su historial criminal o vive junto con alguien que sí lo tiene.
 
-afinidadProducto::Producto->Persona->Bool
-afinidadProducto producto persona = ((gustoProd producto persona) && (necesita producto persona))
 
-eficienciaCampania::[Persona]->Influencer->Producto->Int
-eficienciaCampania listapersonas influencer producto = (cantidadAficionados (campaniaMarketing listapersonas influencer) producto)-(cantidadAficionados listapersonas producto)
 
-cantidadAficionados::[Persona]->Producto->Int
-cantidadAficionados listaDePersonas productoA = (length (filter (==True) (map (afinidadProducto productoA) listaDePersonas)))
+%%%%% PotencialRebelde
 
---Analizar qué sucede en caso de utilizar una lista infinita. Mostrar formas de utilizar algunas de las funciones hechas de manera que:
+%% Sabemos que a76cc es Disidiente, si vive en una casa con mas de 30 cuadrados, la misma se considerará Potencial Rebelde.
+%% a76cc vive en la Comisaria48.
 
---Se quede iterando infinitamente sin arrojar un resultado.
---Si queremos conocer la cantidad de miedosos (Con cantidadMiedosos) de una lista infinita, no tendremos un resultado finito,
---ya que tiene que recorrer toda la lista para darnos una respuesta.
+%casaGrande(comisaria48).
+%true.
 
-mara = [UnaPersona "marisa" ["chocolate"] [("extraterrestres",x),("desempleo",x)] 25| x <-[10..]]
+%Se considera casa grande, por lo tanto si evaluamos a comisaria4 en PotencialRebelde nos deberia dar true.
 
---Se obtenga una respuesta finita.
---Si utilizo un take (Valor finito) en la función esMiedosa usando como argumento "mara", obtendré una lista finita (Tendra como longitud el argumento de take)
---con el resultado de la funcion aplicada
+%potencialRebelde(comisaria48).
+%true ;
 
---La respuesta que se obtiene sea a su vez infinita.
---Si aplico una Camapaña de Marketing sobre la lista infinita de personas (Se utilizó a mara como ejemplo), al usar evaluación
---diferida o lazy, va calculando sobre las personas a medida que lo necesita, no es necesario que recorra toda la lista
---para dar una respuesta
 
---Explicar la utilidad del concepto de aplicación parcial en la resolución realizada dando un ejemplo concreto donde se lo usó
---Aplicacion parcial se utiliza en las funciones que utilizan a los distintos influencers, el influencer básico es una función que
---recibe una Persona y devuelve otra persona
+%%---Punto 6 --- Inversibilidad
 
---type Influencer = Persona->Persona
+%La inversibilidad es una de las características que distinguen al paradigma logico, la inversibilidad nos permite usar argumentos en el predicado como
+%entradas o como salidas. 
 
---Sin embargo, hay influencer como el communityManager que necesita un argumento adicional, para poder utilizarlo en funciones como 
---campaniaMarketing, hay que pasarle el argumento adicional, es decir darle parcialmente el argumento para que luego pueda aplicarse la funcion
---resultante a la lista de personas
+%En principio todo predicado es inversible salvo que caiga en un caso de no inversibilidad.
 
---Pruebas varias:
+%Los casos de no inversibilidad mas tipicos son cuando utilizamos lo siguiente:
 
---Afinidad a un producto:
---afinidadProducto desodoranteAcks mariana
---True
---Como a mariana le gusta el chocolate y tiene una estabilidad menor a 50, tiene afinidad con el desodoranteAcks 
+%Hechos con variables
+%Comparacion por distinto
+%Negación
+%>, >=, <, =<
+%is/2
 
---No pasa lo mismo con juanCa
---afinidadProducto desodoranteAcks juanCa 
---False
 
---ejercitoMinion
---Vemos que al aplicar ejercitoMinion a maria, se le modifica el nombre y se le agrega el miedo a pensar
---ejercitoMinion maria
---UnaPersona {nombre = "minionmaria", tema = ["mecanica"], miedo = [("extraterrestres",600),("desempleo",300),("pensar",100)], est = 85}
+%%% Analizaremos un predicado inversible:
 
---La eficiencia la medimos sobre cantidad de gente con nueva afinidad al producto menos la cantidad de gente sin afinidad previa,
---Indica cuantos nuevos consumidores hay
---eficienciaCampania [juanCa,juanIgnacio,juanCarlos] (communityManager mariana) desodoranteAcks 
---3
---En ese caso, hay 3 nuevos consumidores de producto
+%viveCon/2
+
+%El mismo esta definido de la siguiente forma
+
+%viveCon(Persona1,Persona2):-
+%viveEn(Persona1,Casa),
+%viveEn(Persona2,Casa),
+%Persona1\=Persona2.
+
+%La evaluacion del distinto se hace a lo último.
+
+%viveCon(Persona1,Persona2).
+%Persona1 = ab570,
+%Persona2 = ba4d9 ;
+%Persona1 = ab570,
+%Persona2 = ce234
+
+%Y es inversible para los dos argumentos,
+
+%Si ahora modificamos el predicamo, y ubicamos al principio la comparación, el predicado pierde su caracter de inversible.
+
+%viveCon(Persona1,Persona2):-
+%Persona1\=Persona2,
+%viveEn(Persona1,Casa),
+%viveEn(Persona2,Casa).
+
+%viveCon(Persona1,Persona2).
+%false.
+
+%---Punto 7 ----
+%Si en algún momento se agregara algún tipo nuevo de ambiente en las viviendas, por ejemplo bunkers donde se esconden secretos o entradas a cuevas donde se puede viajar en el tiempo 
+%¿Qué pasaría con la actual solución? 
+%¿Qué se podría hacerse si se quisiera contemplar su superficie para determinar la superficie total de la casa? Implementar una solución con una lógica simple
+%Justificar
+
+
+%Con nuestro planteo inicial, al tener fijas la cantidad de ambientes en la vivienda,
+
+%casas(Nombre,cuartoSecreto(Lado),tunel(Cant,Long),pasadizo(Cant),pasadizoSinTerminar(Cant)).
+% Y al evaluar los metros cuadrados con una casa con mas ambientes fallaria, ya que se agregarían campos que no estan contemplados,
+
+%podemos modificar la solucion, y colocar los functores en listas, no como campos fijos, de esta forma, haciendo uso de polimorfismo
+%podriamos definir metrosCuadradosAmbiente/2, para que calcule las dimensiones de cada ambiente, y luego con otro predicado 
+%adicional metrosTotalesCasa/2 , recorrer la lista e ir calculando el area por separado, luego sumando esto ultimo.
+
+%Nos quedaria:
+%casas(Nombre,[ListaAmbientes]).
+
+%metrosTotalesCasa(Casa,Metros):-
+%ambienteCasa(Casa,Ambiente),
+%findall(Metro,metrosCuadradosAmbiente(Ambiente,Metro),MetrosParciales),
+%sumlist(MetrosParciales,Metros).
+
+%ambienteCasa(Casa,Ambiente):-
+%casas(Casa,Ambientes),
+%member(Ambiente,Ambientes).
+
+%Para el calculo del área de cada ambiente en particular debemos definir la funcion metrosCuadradosAmbiente/2, a diferencia de 
+%nuestra solucion inicial es mas sencilla de modificar si se agrega un nuevo ambiente.
+
+%metrosCuadradosAmbiente(cuartoSecreto(Lado1,Lado2),Metro):-
+%Metro is Lado1 * Lado2.
+
+%metrosCuadradosAmbiente(tunel(Tuneles),Metro):-
+%sumlist(Tuneles,MetrosTunel),
+%Metro is MetrosTunel * 2.
+
+%metrosCuadradosAmbiente(pasadizo(Cant),Metro):-
+%Cant is Metro.
+
+
+%Esta forma de plantear el problema es mejor que la pensada inicialmente, se modifica con lo especificado en el planteo, se plantea el ejemplo de bunker
+%Sus metros totales son cantidad de entradas por 8.
